@@ -20,7 +20,6 @@ class BookController extends Controller
      */
     public function index()
     {
-        dd('aqui');
         $books = $this->bookService->getAllBooks();
         return response()->json($books);
     }

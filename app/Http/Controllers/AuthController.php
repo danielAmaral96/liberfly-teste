@@ -34,25 +34,22 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
-        $credentials = $request->only('email', 'password');
+        $credentials = request(['email', 'password']);
 
-        $validator = Validator::make($credentials, [
-            'email' => 'required|email',
-            'password' => 'required|string',
+        if (! $token = auth()->attempt($credentials)) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        return $this->respondWithToken($token);
+    }
+
+    protected function respondWithToken($token)
+    {
+        return response()->json([
+            'access_token' => $token,
+            'token_type' => 'bearer',
+            'expires_in' => auth()->factory()->getTTL() * 60
         ]);
-
-        if ($validator->fails()) {
-            return response()->json(['message' => 'Invalid credentials'], 400);
-        }
-
-        if (!auth()->attempt($credentials)) {
-            return response()->json(['message' => 'Unauthorized'], 401);
-        }
-
-        $user = auth()->user();
-        $token = $user->createToken('AuthToken')->plainTextToken;
-
-        return response(['user'=> $user,'access_token' => $token]);
     }
 
 }
