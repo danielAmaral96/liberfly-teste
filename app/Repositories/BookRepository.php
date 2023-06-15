@@ -41,12 +41,12 @@ class BookRepository
         return $book;
     }
 
-    public function getByAuthor($authorId)
+    public function getBooksByAuthor($authorId)
     {
         return Book::where('author_id', $authorId)->get();
     }
 
-    public function getByCategory($categoryId)
+    public function getBooksByCategory($categoryId)
     {
         return Book::where('category_id', $categoryId)->get();
     }

@@ -4,7 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Services\CategoryService;
 use Illuminate\Http\Request;
+use App\Http\Requests\CategoryStoreRequest;
 
+/**
+ * @OA\Tag(
+ *     name="Categories",
+ *     description="API Endpoints for Categories"
+ * )
+ */
 class CategoryController extends Controller
 {
     protected $categoryService;
@@ -15,9 +22,16 @@ class CategoryController extends Controller
     }
 
     /**
-     * Retorna todas as categorias.
-     *
-     * @return \Illuminate\Http\JsonResponse
+     * @OA\Get(
+     *     path="/api/categories",
+     *     summary="Get all categories",
+     *     tags={"Categories"},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         
+     *     )
+     * )
      */
     public function index()
     {
@@ -26,10 +40,27 @@ class CategoryController extends Controller
     }
 
     /**
-     * Retorna uma categoria pelo ID.
-     *
-     * @param int $id
-     * @return \Illuminate\Http\JsonResponse
+     * @OA\Get(
+     *     path="/api/categories/{id}",
+     *     summary="Get a category by ID",
+     *     tags={"Categories"},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="Category ID",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Category not found"
+     *     )
+     * )
      */
     public function show($id)
     {
@@ -41,12 +72,27 @@ class CategoryController extends Controller
     }
 
     /**
-     * Cria uma nova categoria.
-     *
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\JsonResponse
+     * @OA\Post(
+     *     path="/api/categories",
+     *     summary="Create a new category",
+     *     tags={"Categories"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         description="Category data",
+     *         @OA\JsonContent(ref="#/components/schemas/CategoryStoreRequest")
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Category created successfully",
+     *        
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation errors"
+     *     )
+     * )
      */
-    public function store(Request $request)
+    public function store(CategoryStoreRequest $request)
     {
         $request->validate([
             'name' => 'required',
@@ -57,11 +103,36 @@ class CategoryController extends Controller
     }
 
     /**
-     * Atualiza uma categoria existente.
-     *
-     * @param \Illuminate\Http\Request $request
-     * @param int $id
-     * @return \Illuminate\Http\JsonResponse
+     * @OA\Put(
+     *     path="/api/categories/{id}",
+     *     summary="Update an existing category",
+     *     tags={"Categories"},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="Category ID",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         description="Category data",
+     *         @OA\JsonContent(ref="#/components/schemas/CategoryStoreRequest")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Category updated successfully",
+     *         
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Category not found"
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation errors"
+     *     )
+     * )
      */
     public function update(Request $request, $id)
     {
@@ -78,10 +149,26 @@ class CategoryController extends Controller
     }
 
     /**
-     * Exclui uma categoria.
-     *
-     * @param int $id
-     * @return \Illuminate\Http\JsonResponse
+     * @OA\Delete(
+     *     path="/api/categories/{id}",
+     *     summary="Delete a category",
+     *     tags={"Categories"},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="Category ID",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=204,
+     *         description="Category deleted successfully"
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Category not found"
+     *     )
+     * )
      */
     public function destroy($id)
     {

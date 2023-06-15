@@ -16,7 +16,7 @@ class AuthController extends Controller
 {
 
     
-
+    
     public function register(AuthRegisterRequest $request)
     {
                 

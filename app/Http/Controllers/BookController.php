@@ -4,127 +4,219 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Services\BookService;
+use App\Repositories\BookRepository;
+use OpenApi\Annotations as OA;
+use App\Http\Requests\BookStoreRequest;
+use Illuminate\Http\Response;
+
+/**
+ * @OA\Tag(
+ *     name="Books",
+ *     description="API Endpoints for Books"
+ * )
+ */
+
 class BookController extends Controller
 {
     protected $bookService;
 
-    public function __construct(BookService $bookService)
+    public function __construct(BookService $bookService, BookRepository $bookRepository)
     {
         $this->bookService = $bookService;
+        $this->bookRepository = $bookRepository;
     }
 
     /**
-     * Retorna todos os livros.
-     *
-     * @return \Illuminate\Http\JsonResponse
+     * @OA\Get(
+     *     path="/api/books",
+     *     summary="Get all books",
+     *     description="Returns a list of all books",
+     *     operationId="getBooks",
+     *     tags={"Books"},
+     *     @OA\Response(response="200", description="Successful operation")
+     * )
      */
     public function index()
     {
-        $books = $this->bookService->getAllBooks();
+        $books = $this->bookRepository->getAll();
         return response()->json($books);
     }
 
     /**
-     * Retorna um livro pelo ID.
-     *
-     * @param int $id
-     * @return \Illuminate\Http\JsonResponse
+     * @OA\Post(
+     *     path="/api/books",
+     *     summary="Create a new book",
+     *     description="Creates a new book",
+     *     operationId="createBook",
+     *     tags={"Books"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(ref="#/components/schemas/BookStoreRequest")
+     *     ),
+     *     @OA\Response(response="201", description="Book created"),
+     *     @OA\Response(response="422", description="Validation error")
+     * )
+     */
+    
+     public function store(BookStoreRequest $request)
+     {
+         $book = $this->bookService->createBook($request->validated());
+         return response()->json($book, 201);
+     }
+
+    /**
+     * @OA\Get(
+     *     path="/api/books/{id}",
+     *     summary="Get a book by ID",
+     *     description="Returns a single book by its ID",
+     *     operationId="getBook",
+     *     tags={"Books"},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="ID of the book",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(response="200", description="Successful operation"),
+     *     @OA\Response(response="404", description="Book not found")
+     * )
      */
     public function show($id)
     {
-        $book = $this->bookService->getBookById($id);
+        $book = $this->bookRepository->getById($id);
         if (!$book) {
-            return response()->json(['message' => 'Book not found'], 404);
+            return response()->json(['error' => 'Book not found'], 404);
         }
         return response()->json($book);
     }
 
     /**
-     * Cria um novo livro.
-     *
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function store(Request $request)
-    {
-        $request->validate([
-            'name' => 'required',
-            'author_id' => 'required',
-            'category_id' => 'required',
-            'description' => 'required',
-        ]);
-
-        $book = $this->bookService->createBook($request->all());
-        return response()->json($book, 201);
-    }
-
-    /**
-     * Atualiza um livro existente.
-     *
-     * @param \Illuminate\Http\Request $request
-     * @param int $id
-     * @return \Illuminate\Http\JsonResponse
+     * @OA\Put(
+     *     path="/api/books/{id}",
+     *     summary="Update a book",
+     *     description="Updates an existing book",
+     *     operationId="updateBook",
+     *     tags={"Books"},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="ID of the book",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(ref="#/components/schemas/BookStoreRequest")
+     *     ),
+     *     @OA\Response(response="200", description="Book updated"),
+     *     @OA\Response(response="404", description="Book not found"),
+     *     @OA\Response(response="422", description="Validation error")
+     * )
      */
     public function update(Request $request, $id)
     {
         $request->validate([
-            'name' => 'required',
-            'author_id' => 'required',
-            'category_id' => 'required',
-            'description' => 'required',
+            'name' => 'required|string',
+            'author_id' => 'required|integer|exists:authors,id',
+            'category_id' => 'required|integer|exists:categories,id',
+            'description' => 'required|string',
         ]);
-
-        $book = $this->bookService->updateBook($id, $request->all());
+        $book = $this->bookRepository->getById($id);
         if (!$book) {
-            return response()->json(['message' => 'Book not found'], 404);
+            return response()->json(['error' => 'Book not found'], 404);
         }
-
-        return response()->json($book);
+        $updatedBook = $this->bookService->updateBook($id, $request->all());
+        return response()->json($updatedBook);
     }
 
     /**
-     * Exclui um livro.
-     *
-     * @param int $id
-     * @return \Illuminate\Http\JsonResponse
+     * @OA\Delete(
+     *     path="/api/books/{id}",
+     *     summary="Delete a book",
+     *     description="Deletes a book by its ID",
+     *     operationId="deleteBook",
+     *     tags={"Books"},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="ID of the book",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(response="204", description="Book deleted"),
+     *     @OA\Response(response="404", description="Book not found")
+     * )
      */
     public function destroy($id)
     {
-        $book = $this->bookService->deleteBook($id);
+        $book = $this->bookRepository->getById($id);
         if (!$book) {
-            return response()->json(['message' => 'Book not found'], 404);
+            return response()->json(['error' => 'Book not found'], 404);
         }
-
-        return response()->json(['message' => 'Book deleted']);
+        $this->bookService->deleteBook($id);
+        return response()->json(['message' => 'Book deleted successfully']);
     }
 
     /**
-     * Retorna os livros de um autor pelo ID do autor.
-     *
-     * @param int $authorId
-     * @return \Illuminate\Http\JsonResponse
+     * @OA\Get(
+     *     path="/api/books/by-author/{authorId}",
+     *     summary="Get books by author",
+     *     description="Returns a list of books written by a specific author",
+     *     operationId="getBooksByAuthor",
+     *     tags={"Books"},
+     *     @OA\Parameter(
+     *         name="authorId",
+     *         in="path",
+     *         description="ID of the author",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(response="200", description="Successful operation"),
+     *     @OA\Response(response="404", description="Author not found")
+     * )
      */
     public function getByAuthor($authorId)
     {
+       
         $books = $this->bookService->getBooksByAuthor($authorId);
-        if (!$books) {
-            return response()->json(['message' => 'Author not found'], 404);
+
+        if ($books->isEmpty()) {
+            return response()->json(['message' => 'Author not found'], Response::HTTP_NOT_FOUND);
         }
-        return response()->json($books);
+
+        return response()->json($books, Response::HTTP_OK);
     }
 
     /**
-     * Retorna os livros de uma categoria pelo ID da categoria.
-     *
-     * @param int $categoryId
-     * @return \Illuminate\Http\JsonResponse
+     * @OA\Get(
+     *     path="/api/books/by-category/{categoryId}",
+     *     summary="Get books by category",
+     *     description="Returns a list of books belonging to a specific category",
+     *     operationId="getBooksByCategory",
+     *     tags={"Books"},
+     *     @OA\Parameter(
+     *         name="categoryId",
+     *         in="path",
+     *         description="ID of the category",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(response="200", description="Successful operation"),
+     *     @OA\Response(response="404", description="Category not found")
+     * )
      */
     public function getByCategory($categoryId)
     {
         $books = $this->bookService->getBooksByCategory($categoryId);
-        if (!$books) {
-            return response()->json(['message' => 'Category not found'], 404);
+
+        if ($books->isEmpty()) {
+            return response()->json(['message' => 'Category not found'], Response::HTTP_NOT_FOUND);
         }
-        return response()->json($books);
+
+        return response()->json($books, Response::HTTP_OK);
     }
+
+    
+    
 }

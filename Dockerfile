@@ -37,6 +37,7 @@ RUN php artisan jwt:secret
 
 # Executar os comandos de migração
 RUN php artisan migrate 
+RUN php artisan db:seed
 
 # Expor a porta 9000 para conexões do servidor web
 EXPOSE 9000

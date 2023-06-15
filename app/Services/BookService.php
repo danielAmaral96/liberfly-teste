@@ -40,11 +40,12 @@ class BookService
 
     public function getBooksByAuthor($authorId)
     {
-        return $this->bookRepository->getByAuthor($authorId);
+        
+        return $this->bookRepository->getBooksByAuthor($authorId);
     }
 
     public function getBooksByCategory($categoryId)
     {
-        return $this->bookRepository->getByCategory($categoryId);
+        return $this->bookRepository->getBooksByCategory($categoryId);
     }
 }
